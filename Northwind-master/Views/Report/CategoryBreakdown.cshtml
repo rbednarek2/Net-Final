@@ -1,0 +1,79 @@
+﻿@using Northwind.Models
+@model IEnumerable<Category>
+
+<h1>Category Breakdown</h1>
+<div class="container">
+
+    <label for="formControl">Select Category</label>
+    <select class="form-control" id="formControl">
+
+    </select>
+
+    <div class="card">
+        <div class="card-body">
+            <canvas id="chDonut1"></canvas>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"
+        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+        crossorigin="anonymous">
+</script>
+<script>
+    @foreach (Category c in Model)
+    {
+        <text>
+            console.log(@c.CategoryId);
+        </text>
+    }
+
+    // Data -----------
+    var labels = [['Item1', 'Item2', 'Item3'], ['Other1', 'other2', 'other3']]
+    var dataSet = [[1, 2, 3], [4, 5, 6]]
+
+    // chart colors
+    var colors = ['#007bff', '#28a745', '#333333', '#c3e6cb', '#dc3545', '#6c757d'];
+
+    // Chart options
+    var donutOptions = {
+        cutoutPercentage: 0,
+        legend: { position: 'left', padding: 5, labels: { pointStyle: 'circle', usePointStyle: true } }
+    };
+
+
+    var myChart;
+    $('#formControl').change(function () {
+        var selected = $('#formControl option:selected').attr('name');
+        selected = selected - 1;
+
+        if (myChart) {
+            myChart.destroy();
+        }
+
+        var newData = "";
+        var chDonut1 = "";
+
+        newData = {
+            labels: labels[selected],
+            datasets: [
+                {
+                    backgroundColor: colors,
+                    borderWidth: 0,
+                    data: dataSet [selected]
+                }
+            ]
+        };
+
+        chDonut1 = $('#chDonut1');
+        myChart = new Chart(chDonut1, {
+                                type: 'pie',
+                                data: newData,
+                                options: donutOptions
+                            });
+
+        myChart.update();
+    });
+
+
+</script>
