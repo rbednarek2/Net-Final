@@ -12,7 +12,7 @@ namespace Northwind.Controllers
         private INorthwindRepository repository;
         public ReportController(INorthwindRepository repo) => repository = repo;
 
-        public IActionResult CategoryBreakdown() => View();
+        public IActionResult CategoryBreakdown() => View(repository.Categories.OrderBy(c => c.CategoryId));
 
         [HttpGet, Route("reports/report")]
         public IEnumerable<CategoryRevenue> GetRevenue()
@@ -25,13 +25,14 @@ namespace Northwind.Controllers
             });
         }
 
-        //TEST
-        [HttpGet, Route("api/pro")]
         // returns all products
-        public IEnumerable<OrderDetail> Get() => repository.OrderDetails.OrderBy(p => p.OrderID);
+        [HttpGet, Route("reports/allProducts")]
+        public IEnumerable<Product> Get() => repository.Products.OrderBy(p => p.ProductId);
 
 
-
+        //[HttpGet, Route("api/Test")]
+        // returns all products
+        // public IEnumerable<Product> Get() => repository.Products.Select(Product.);
 
     }
 }

@@ -1,19 +1,33 @@
 ﻿@using Northwind.Models
 @model IEnumerable<Category>
 
-<h1>Category Breakdown</h1>
-<div class="container">
 
-    <label for="formControl">Select Category</label>
+<div class="container" style="padding-top: 25px">
+    <h1>Inventory Breakdown by Category</h1>
+
     <select class="form-control" id="formControl">
-
+        <option name="0">Select a Category</option>
+        @foreach (Category c in Model)
+        {
+            <text>
+                <option name="@c.CategoryId">@c.CategoryName</option>
+            </text>
+        }
     </select>
+
+    <div class="card" style="padding-left: 10px; padding-top:10px; padding-bottom:auto">
+        <form id="radioButtons">
+            <label class="radio-inline"><input type="radio" name="radio" value="In Stock" checked>Units In Stock</label>
+            <label class="radio-inline"><input type="radio" name="radio" value="On Order">Units on Order</label>
+        </form>
+    </div>
 
     <div class="card">
         <div class="card-body">
             <canvas id="chDonut1"></canvas>
         </div>
     </div>
+
 </div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.4.1.min.js"
@@ -21,32 +35,87 @@
         crossorigin="anonymous">
 </script>
 <script>
+
+    // Placeholder for all of the data
+    var labels = [[]];
+    var inStock = [[]];
+    var onOrder = [[]];
     @foreach (Category c in Model)
     {
         <text>
-            console.log(@c.CategoryId);
+            labels.push([]);
+            inStock.push([]);
+            onOrder.push([]);
         </text>
     }
 
-    // Data -----------
-    var labels = [['Item1', 'Item2', 'Item3'], ['Other1', 'other2', 'other3']]
-    var dataSet = [[1, 2, 3], [4, 5, 6]]
+    // Colors for the chart
+    var colors = [];
+    //RandomColor generator
+    function randomColor() {
+        var o = Math.round;
+        var r = Math.random;
+        var s = 255;
+        return 'rgba(' + o(r() * s) + ', '
+            + o(r() * s) + ', '
+            + o(r() * s) + ', '
+            + 0.8 + ')';
+    }
 
-    // chart colors
-    var colors = ['#007bff', '#28a745', '#333333', '#c3e6cb', '#dc3545', '#6c757d'];
+    // Data for chart selection
+    var selectedCategory = 0;
+    var selectedType = "In Stock";
+
+    // Getting data
+    $(function () {
+        function getData() {
+            $.getJSON({
+                url: "../../reports/allProducts",
+                success: function (response, textStatus, jqXhr) {
+                    for (var i = 0; i < response.length; i++) {
+                        labels[response[i].categoryId].push(response[i].productName);
+                        inStock[response[i].categoryId].push(response[i].unitsInStock);
+                        onOrder[response[i].categoryId].push(response[i].unitsOnOrder);
+
+                        colors.push(randomColor());
+                    }
+                    console.log("labels: " + labels);
+                    console.log("in stock: " + inStock);
+                    console.log("on order: " + onOrder);
+                }
+            })
+        }
+
+        getData();
+    })
 
     // Chart options
     var donutOptions = {
-        cutoutPercentage: 0,
-        legend: { position: 'left', padding: 5, labels: { pointStyle: 'circle', usePointStyle: true } }
+        cutoutPercentage: 40,
+        legend: {
+            position: 'left', padding: 5,
+            labels: { pointStyle: 'circle', usePointStyle: true }
+        }
     };
 
-
+    // Function called when a differnt option is selected
     var myChart;
     $('#formControl').change(function () {
-        var selected = $('#formControl option:selected').attr('name');
-        selected = selected - 1;
+        selectedCategory = $('#formControl option:selected').attr('name');
+        //selected = selected - 1;
 
+        drawChart();
+    });
+
+    // Function called when radio button clicked
+    $('#radioButtons').change(function () {
+        selectedType = $("input[name='radio']:checked").val();
+        console.log("type: " + selectedType);
+
+        drawChart();
+    });
+
+    function drawChart() {
         if (myChart) {
             myChart.destroy();
         }
@@ -54,26 +123,37 @@
         var newData = "";
         var chDonut1 = "";
 
-        newData = {
-            labels: labels[selected],
-            datasets: [
-                {
-                    backgroundColor: colors,
-                    borderWidth: 0,
-                    data: dataSet [selected]
-                }
-            ]
-        };
+        if (selectedType == "In Stock") {
+            newData = {
+                labels: labels[selectedCategory],
+                datasets: [
+                    {
+                        backgroundColor: colors,
+                        borderWidth: 0,
+                        data: inStock[selectedCategory]
+                    }
+                ]
+            };
+        } else if (selectedType == "On Order") {
+            newData = {
+                labels: labels[selectedCategory],
+                datasets: [
+                    {
+                        backgroundColor: colors,
+                        borderWidth: 0,
+                        data: onOrder[selectedCategory]
+                    }
+                ]
+            };
+        }
 
         chDonut1 = $('#chDonut1');
         myChart = new Chart(chDonut1, {
-                                type: 'pie',
-                                data: newData,
-                                options: donutOptions
-                            });
+            type: 'pie',
+            data: newData,
+            options: donutOptions
+        });
 
         myChart.update();
-    });
-
-
+    }
 </script>
